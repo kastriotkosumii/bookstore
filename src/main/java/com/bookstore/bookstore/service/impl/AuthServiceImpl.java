@@ -1,6 +1,5 @@
 package com.bookstore.bookstore.service.impl;
 
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -9,12 +8,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.bookstore.bookstore.Security.jwt.JwtUtils;
+import com.bookstore.bookstore.exception.user.UserNotFoundException;
 import com.bookstore.bookstore.model.User;
 import com.bookstore.bookstore.payload.request.auth.LoginRequest;
 import com.bookstore.bookstore.payload.request.auth.SignupRequest;
 import com.bookstore.bookstore.payload.response.auth.JWTResponse;
 import com.bookstore.bookstore.repository.UserRepository;
 import com.bookstore.bookstore.service.AuthService;
+import com.bookstore.bookstore.service.RefreshTokenService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,6 +30,8 @@ public class AuthServiceImpl implements AuthService{
     private final AuthenticationManager authenticationManager;
 
     private final JwtUtils jwtUtils;
+
+    private final RefreshTokenService refreshTokenService;
 
     @Override
     public String register(SignupRequest request) {
@@ -58,11 +61,12 @@ public class AuthServiceImpl implements AuthService{
         SecurityContextHolder.getContext().setAuthentication(auth);
         String jwtToken = jwtUtils.generateJwtToken(auth);
 
-        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(RuntimeException::new);
+        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(UserNotFoundException::new);
 
         return JWTResponse.builder()
                 .email(request.getEmail())
                 .token(jwtToken)
+                .refreshToken(refreshTokenService.createRefreshToken(user))
                 .build();
     }
     

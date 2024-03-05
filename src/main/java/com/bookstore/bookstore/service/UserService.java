@@ -6,6 +6,6 @@ import com.bookstore.bookstore.model.User;
 
 public interface UserService {
     Optional<User> findByUsername(String username);
-    Optional<User> fundById(Long id);
+    Optional<User> findById(Long id);
     Optional<User> findByEmail(String email);
 }
